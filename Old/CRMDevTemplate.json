@@ -1,0 +1,429 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"virtualNetworks_RM_CRM_Dev_name": {
+			"defaultValue": "RM-CRM-Dev",
+			"type": "String"
+		},
+		"storageAccounts_rmcrmev2343_name": {
+			"defaultValue": "rmcrmev2343",
+			"type": "String"
+		}
+	},
+	"variables": {},
+	"resources": [{
+
+		"type": "Microsoft.Compute/virtualMachines",
+		"name": "CRM01",
+		"apiVersion": "2015-06-15",
+		"location": "westeurope",
+		"properties": {
+			"hardwareProfile": {
+				"vmSize": "Standard_A1"
+			},
+			"storageProfile": {
+				"imageReference": {
+					"publisher": "MicrosoftWindowsServer",
+					"offer": "WindowsServer",
+					"sku": "2012-R2-Datacenter",
+					"version": "latest"
+				},
+				"osDisk": {
+					"name": "windowsvmosdisk2",
+					"createOption": "FromImage",
+					"vhd": {
+						"uri": "[concat('https', '://', parameters('storageAccounts_rmcrmev2343_name'), '.blob.core.windows.net', '/vhds/WindowsVMosDisk2.vhd')]"
+					},
+					"caching": "ReadWrite"
+				},
+				"dataDisks": []
+			},
+			"osProfile": {
+				"computerName": "CRM01",
+				"adminUsername": "SysAdmin",
+				"windowsConfiguration": {
+					"provisionVMAgent": true,
+					"enableAutomaticUpdates": true
+				},
+				"secrets": [],
+				"adminPassword": "Lockheed.2015"
+			},
+			"networkProfile": {
+				"networkInterfaces": [{
+					"id": "[resourceId('Microsoft.Network/networkInterfaces', 'CRM01')]"
+				}]
+			}
+		},
+		"dependsOn": [
+			"[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_rmcrmev2343_name'))]",
+			"Microsoft.Network/networkInterfaces/CRM01"
+		],
+		"resources": [{
+				"apiVersion": "2015-06-15",
+				"type": "Microsoft.Compute/virtualMachines/extensions",
+				"name": "CRM01/DomainJoin",
+				"location": "westeurope",
+				"dependsOn": ["Microsoft.Compute/virtualMachines/CRM01",
+				"Microsoft.Compute/virtualMachines/DC01/extensions/MyCustomScriptExtension"],
+				"properties": {
+					"publisher": "Microsoft.Compute",
+					"type": "JsonADDomainExtension",
+					"typeHandlerVersion": "1.0",
+					"settings": {
+						"Name": "CRMDev.local",
+						"User": "CRMDev\\SysAdmin",
+						"Restart": "true"
+					},
+					"protectedsettings": {
+						"Password": "Lockheed.2015"
+					}
+				},
+				"resources": [{
+					"type": "Microsoft.Compute/virtualMachines/extensions",
+					"name": "CRM01/MyCustomScriptExtension",
+					"apiVersion": "2016-03-30",
+					"location": "westeurope",
+					"dependsOn": ["Microsoft.Compute/virtualMachines/CRM01",
+						"Microsoft.Compute/virtualMachines/CRM01/extensions/DomainJoin"
+					],
+					"properties": {
+						"publisher": "Microsoft.Compute",
+						"type": "CustomScriptExtension",
+						"typeHandlerVersion": "1.8",
+						"autoUpgradeMinorVersion": true,
+						"settings": {
+							"fileUris": [
+								"https://s3-eu-west-1.amazonaws.com/crmdev-lm/Software_Deployment.ps1"
+							],
+							"commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File 'C:\\Packages\\Plugins\\Microsoft.Compute.CustomScriptExtension\\1.8\\Downloads\\0\\Software_Deployment.ps1'"
+						}
+					}
+				}]
+
+
+			}
+
+		]
+
+	}, {
+
+		"type": "Microsoft.Compute/virtualMachines",
+		"name": "DC01",
+		"apiVersion": "2015-06-15",
+		"location": "westeurope",
+		"properties": {
+			"hardwareProfile": {
+				"vmSize": "Standard_A1"
+			},
+			"storageProfile": {
+				"imageReference": {
+					"publisher": "MicrosoftWindowsServer",
+					"offer": "WindowsServer",
+					"sku": "2012-R2-Datacenter",
+					"version": "latest"
+				},
+				"osDisk": {
+					"name": "windowsvmosdisk0",
+					"createOption": "FromImage",
+					"vhd": {
+						"uri": "[concat('https', '://', parameters('storageAccounts_rmcrmev2343_name'), '.blob.core.windows.net', '/vhds/WindowsVMosDisk0.vhd')]"
+					},
+					"caching": "ReadWrite"
+				},
+				"dataDisks": []
+			},
+			"osProfile": {
+				"computerName": "DC01",
+				"adminUsername": "SysAdmin",
+				"windowsConfiguration": {
+					"provisionVMAgent": true,
+					"enableAutomaticUpdates": true
+				},
+				"secrets": [],
+				"adminPassword": "Lockheed.2015"
+			},
+			"networkProfile": {
+				"networkInterfaces": [{
+					"id": "[resourceId('Microsoft.Network/networkInterfaces', 'DC01')]"
+				}]
+			}
+		},
+		"dependsOn": [
+			"[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_rmcrmev2343_name'))]",
+			"Microsoft.Network/networkInterfaces/DC01"
+		],
+		"resources": [{
+			"type": "Microsoft.Compute/virtualMachines/extensions",
+			"name": "DC01/MyCustomScriptExtension",
+			"apiVersion": "2016-03-30",
+			"location": "westeurope",
+			"dependsOn": ["Microsoft.Compute/virtualMachines/DC01"],
+			"properties": {
+				"publisher": "Microsoft.Compute",
+				"type": "CustomScriptExtension",
+				"typeHandlerVersion": "1.8",
+				"autoUpgradeMinorVersion": true,
+				"settings": {
+					"fileUris": [
+						"https://s3-eu-west-1.amazonaws.com/crmdev-lm/start.ps1"
+					],
+					"commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File 'C:\\Packages\\Plugins\\Microsoft.Compute.CustomScriptExtension\\1.8\\Downloads\\0\\start.ps1'"
+				}
+			}
+		}]
+	}, {
+
+		"type": "Microsoft.Compute/virtualMachines",
+		"name": "SHA01",
+		"apiVersion": "2015-06-15",
+		"location": "westeurope",
+		"properties": {
+			"hardwareProfile": {
+				"vmSize": "Standard_A1"
+			},
+			"storageProfile": {
+				"imageReference": {
+					"publisher": "MicrosoftWindowsServer",
+					"offer": "WindowsServer",
+					"sku": "2012-R2-Datacenter",
+					"version": "latest"
+				},
+				"osDisk": {
+					"name": "windowsvmosdisk3",
+					"createOption": "FromImage",
+					"vhd": {
+						"uri": "[concat('https', '://', parameters('storageAccounts_rmcrmev2343_name'), '.blob.core.windows.net', '/vhds/WindowsVMosDisk3.vhd')]"
+					},
+					"caching": "ReadWrite"
+				},
+				"dataDisks": []
+			},
+			"osProfile": {
+				"computerName": "SHA01",
+				"adminUsername": "SysAdmin",
+				"windowsConfiguration": {
+					"provisionVMAgent": true,
+					"enableAutomaticUpdates": true
+				},
+				"secrets": [],
+				"adminPassword": "Lockheed.2015"
+			},
+			"networkProfile": {
+				"networkInterfaces": [{
+					"id": "[resourceId('Microsoft.Network/networkInterfaces', 'SHA01')]"
+				}]
+			}
+		},
+		"dependsOn": [
+			"[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_rmcrmev2343_name'))]",
+			"Microsoft.Network/networkInterfaces/SHA01"
+		],
+		"resources": [{
+				"apiVersion": "2015-06-15",
+				"type": "Microsoft.Compute/virtualMachines/extensions",
+				"name": "SHA01/DomainJoin",
+				"location": "westeurope",
+				"dependsOn": ["Microsoft.Compute/virtualMachines/SHA01",
+				"Microsoft.Compute/virtualMachines/DC01/extensions/MyCustomScriptExtension"],
+				"properties": {
+					"publisher": "Microsoft.Compute",
+					"type": "JsonADDomainExtension",
+					"typeHandlerVersion": "1.0",
+					"settings": {
+						"Name": "CRMDev.local",
+						"User": "CRMDev\\Sysadmin",
+						"Restart": "true"
+					},
+					"protectedsettings": {
+						"Password": "Lockheed.2015"
+					}
+				},
+				"resources": [{
+					"type": "Microsoft.Compute/virtualMachines/extensions",
+					"name": "SHA01/MyCustomScriptExtension",
+					"apiVersion": "2016-03-30",
+					"location": "westeurope",
+					"dependsOn": ["Microsoft.Compute/virtualMachines/SHA01",
+						"Microsoft.Compute/virtualMachines/SHA01/extensions/DomainJoin"
+					],
+					"properties": {
+						"publisher": "Microsoft.Compute",
+						"type": "CustomScriptExtension",
+						"typeHandlerVersion": "1.8",
+						"autoUpgradeMinorVersion": true,
+						"settings": {
+							"fileUris": [
+								"https://s3-eu-west-1.amazonaws.com/crmdev-lm/Software_Deployment.ps1"
+							],
+							"commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File 'C:\\Packages\\Plugins\\Microsoft.Compute.CustomScriptExtension\\1.8\\Downloads\\0\\Software_Deployment.ps1'"
+						}
+					}
+				}]
+
+
+			}
+
+		]
+	}, {
+
+		"type": "Microsoft.Network/networkInterfaces",
+		"name": "CRM01",
+		"apiVersion": "2016-03-30",
+		"location": "westeurope",
+		"properties": {
+			"ipConfigurations": [{
+				"name": "ipconfig1",
+				"properties": {
+					"privateIPAddress": "10.0.0.7",
+					"privateIPAllocationMethod": "Static",
+					"publicIPAddress": {
+						"id": "[resourceId('Microsoft.Network/publicIPAddresses', 'CRM01')]"
+					},
+					"subnet": {
+						"id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_RM_CRM_Dev_name')), '/subnets/Internal')]"
+					}
+				}
+			}],
+			"dnsSettings": {
+				"dnsServers": []
+			},
+			"enableIPForwarding": false
+		},
+		"dependsOn": [
+			"Microsoft.Network/publicIPAddresses/CRM01",
+			"[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_RM_CRM_Dev_name'))]"
+		]
+	}, {
+
+		"type": "Microsoft.Network/networkInterfaces",
+		"name": "DC01",
+		"apiVersion": "2016-03-30",
+		"location": "westeurope",
+		"properties": {
+			"ipConfigurations": [{
+				"name": "ipconfig1",
+				"properties": {
+					"privateIPAddress": "10.0.0.4",
+					"privateIPAllocationMethod": "Static",
+					"publicIPAddress": {
+						"id": "[resourceId('Microsoft.Network/publicIPAddresses', 'DC01')]"
+					},
+					"subnet": {
+						"id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_RM_CRM_Dev_name')), '/subnets/Internal')]"
+					}
+				}
+			}],
+			"dnsSettings": {
+				"dnsServers": []
+			},
+			"enableIPForwarding": false
+		},
+		"dependsOn": [
+			"Microsoft.Network/publicIPAddresses/DC01",
+			"[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_RM_CRM_Dev_name'))]"
+		]
+	}, {
+
+		"type": "Microsoft.Network/networkInterfaces",
+		"name": "SHA01",
+		"apiVersion": "2016-03-30",
+		"location": "westeurope",
+		"properties": {
+			"ipConfigurations": [{
+				"name": "ipconfig1",
+				"properties": {
+					"privateIPAddress": "10.0.0.6",
+					"privateIPAllocationMethod": "Static",
+					"publicIPAddress": {
+						"id": "[resourceId('Microsoft.Network/publicIPAddresses', 'SHA01')]"
+					},
+					"subnet": {
+						"id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_RM_CRM_Dev_name')), '/subnets/Internal')]"
+					}
+				}
+			}],
+			"dnsSettings": {
+				"dnsServers": []
+			},
+			"enableIPForwarding": false
+		},
+		"dependsOn": [
+			"Microsoft.Network/publicIPAddresses/SHA01",
+			"[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_RM_CRM_Dev_name'))]"
+		]
+	}, {
+
+		"type": "Microsoft.Network/publicIPAddresses",
+		"name": "CRM01",
+		"apiVersion": "2016-03-30",
+		"location": "westeurope",
+		"properties": {
+			"publicIPAllocationMethod": "Dynamic",
+			"idleTimeoutInMinutes": 4
+		},
+		"dependsOn": []
+	}, {
+
+		"type": "Microsoft.Network/publicIPAddresses",
+		"name": "DC01",
+		"apiVersion": "2016-03-30",
+		"location": "westeurope",
+		"properties": {
+			"publicIPAllocationMethod": "Dynamic",
+			"idleTimeoutInMinutes": 4
+		},
+		"dependsOn": []
+	}, {
+
+		"type": "Microsoft.Network/publicIPAddresses",
+		"name": "SHA01",
+		"apiVersion": "2016-03-30",
+		"location": "westeurope",
+		"properties": {
+			"publicIPAllocationMethod": "Dynamic",
+			"idleTimeoutInMinutes": 4
+		},
+		"dependsOn": []
+	}, {
+
+		"type": "Microsoft.Network/virtualNetworks",
+		"name": "[parameters('virtualNetworks_RM_CRM_Dev_name')]",
+		"apiVersion": "2016-03-30",
+		"location": "westeurope",
+		"properties": {
+			"addressSpace": {
+				"addressPrefixes": [
+					"10.0.0.0/16"
+				]
+			},
+			"dhcpOptions": {
+				"dnsServers": [
+					"10.0.0.4",
+					"8.8.8.8"
+				]
+			},
+			"subnets": [{
+				"name": "Internal",
+				"properties": {
+					"addressPrefix": "10.0.0.0/24"
+				}
+			}]
+		},
+		"dependsOn": []
+	}, {
+
+		"type": "Microsoft.Storage/storageAccounts",
+		"sku": {
+			"name": "Standard_LRS",
+			"tier": "Standard"
+		},
+		"kind": "Storage",
+		"name": "[parameters('storageAccounts_rmcrmev2343_name')]",
+		"apiVersion": "2016-01-01",
+		"location": "westeurope",
+		"tags": {},
+		"properties": {},
+		"dependsOn": []
+	}]
+}

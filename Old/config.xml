@@ -1,0 +1,65 @@
+<CRMSetup>
+<Server>
+<Patch update="false">\\ServerName\ShareName\patchfile.msp</Patch>
+<LicenseKey>XXXXX-XXXXX-XXXXX-XXXXX-XXXXX</LicenseKey>
+<SqlServer>SQL01\MSSQL</SqlServer>
+<Database create="true"/>
+<Reporting URL="http://localhost/ReportServer"/>
+<OrganizationCollation>Latin1_General_CI_AI</OrganizationCollation>
+<basecurrency isocurrencycode="USD" currencyname="US Dollar" currencysymbol="$" currencyprecision="2"/>
+<Organization>CRM Developer</Organization>
+<OrganizationUniqueName>CRMDev</OrganizationUniqueName>
+<OU>OU=value,DC=subdomain,DC=subdomain,DC=subdomain,DC=com</OU>
+<WebsiteUrl create="true" port="5555"> </WebsiteUrl>
+<InstallDir>c:\Program Files\Microsoft Dynamics CRM</InstallDir>
+
+<CrmServiceAccount type="DomainUser">
+  <ServiceAccountLogin>DevCRM</ServiceAccountLogin>
+  <ServiceAccountPassword>Lockheed.2016</ServiceAccountPassword>
+</CrmServiceAccount>
+
+<SandboxServiceAccount type="DomainUser">
+  <ServiceAccountLogin>DevCRM\CRMSandboxService</ServiceAccountLogin>
+  <ServiceAccountPassword>password</ServiceAccountPassword>
+</SandboxServiceAccount>
+
+<DeploymentServiceAccount type="DomainUser">
+  <ServiceAccountLogin>DevCRM\CRMDeploymentService</ServiceAccountLogin>
+  <ServiceAccountPassword>password</ServiceAccountPassword>
+</DeploymentServiceAccount>
+
+<AsyncServiceAccount type="DomainUser">
+  <ServiceAccountLogin>DevCRM\CRMAsyncService</ServiceAccountLogin>
+  <ServiceAccountPassword>password</ServiceAccountPassword>
+</AsyncServiceAccount>
+
+<VSSWriterServiceAccount type="DomainUser"> 
+  <ServiceAccountLogin>DevCRM\CRMVSSWriterService</ServiceAccountLogin>
+  <ServiceAccountPassword>password</ServiceAccountPassword>
+</VSSWriterServiceAccount>
+
+<MonitoringServiceAccount type="DomainUser">
+  <ServiceAccountLogin>DevCRM\CRMMonitoringService</ServiceAccountLogin>
+  <ServiceAccountPassword>password</ServiceAccountPassword>
+</MonitoringServiceAccount>
+
+  <SQM optin="true"/>
+ <muoptin optin="true"/>
+
+<!-- Settings for IFD installation. May be skipped for intranet-only deployment or to configure IFD later. -->
+ <ifdsettings enabled="false">
+      <!-- Define what address considered internal, required only if enabled=true -->
+      <internalnetworkaddress>10.0.0.1-255.0.0.0</internalnetworkaddress>
+      <!-- Define URLs with IFD authentication, required only if enabled=true -->
+      <rootdomainscheme>http</rootdomainscheme>
+      <sdkrootdomain>api.DevCRM.com</sdkrootdomain>
+      <webapplicationrootdomain>app.DevCRM.com</webapplicationrootdomain>
+      <discoveryrootdomain>disc.DevCRM.com</discoveryrootdomain>
+ </ifdsettings>
+
+ <Email>
+  <IncomingExchangeServer name=""/>
+ </Email>
+
+ </Server>
+</CRMSetup>
