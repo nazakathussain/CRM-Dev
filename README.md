@@ -2,23 +2,21 @@
 
 Synopsis
  
- This repo includes the source code to deploy
- a CRM/Sharepoint Development enviroment using 
- a simple powershell scripy using a one touch 
- approach.
+This project aims to produce a autoamted deployment script of CRM and Sharepoint into Azure. A single execution of the script should be enough to create the VM's and install the vanilla install of the software.
  
- Code Example
+Code Example
  
  .\CRMDeploy.ps1
  
- No parameters are required. An azure subscription is required.
+No parameters are required to execute the script. 
+
+A valid Azure Subscription is required.
  
- Motivation
+Motivation
+
+This is driven by the need to automatically deploy CRM and Sharepoints servers in a development setting quickly and simply without any need for knowledge of the install process. The vanilla install should be enough for developers to contiune to customise the software.
+
  
- To address the need for developers to quick deploy
- and rip down development enviroments..
+Installation
  
- Installation
- 
- To run the script powershell tools for azure is required.
- Nothing else is required to run the script.
+There is no installation required for this script, simply copy and paste to the required location. A copy of Sharepoint and CRM installers is required in a public cloud.
